@@ -1,0 +1,66 @@
+.container{
+  height: 100vh;
+  min-height: 600px;
+  width: 100vw;
+  display: grid;
+  grid-template-columns: 0.3fr 0.4fr 0.3fr;
+  grid-template-rows: 0.1fr 0.9fr;
+  grid-template-areas: 'logo none links'
+                       'body body body';
+}
+
+.logo{ 
+  grid-area: logo;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2vw;
+  font-weight: 700;
+}
+.links{
+  grid-area: links;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2vw;
+  font-weight: 700;
+}
+#signupLink{
+  margin-left: 2vw;
+  background-color: #F67E7D;
+  padding: 10px;
+}
+.body{
+  grid-area: body;
+  display: flex;
+}
+.bodyText{
+  width: 50vw;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 10vw;
+}
+.bodyText h1{
+  width: 40vw;
+  font-weight: 600;
+}
+.bodyText h2{
+  width: 40vw;
+  font-weight: 600;
+}
+.getStartedLink{
+  font-size: 2vw;
+  font-weight: 600;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #F67E7D;
+  width: fit-content;
+}
+.bodyImage{
+  width: 40vw;
+  margin-right: 10vw;
+  height: 100%;
+  position: relative;
+}
