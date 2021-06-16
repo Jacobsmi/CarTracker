@@ -10,15 +10,13 @@ export default function Signup(){
             <main className={styles.form}>
                 <h1>Sign Up</h1>
                 <form>
-                    <label htmlFor='name'>Name</label>
-                    <input type='text' id='name' /> <br />
-                    <label htmlFor='email'>E-Mail</label>
-                    <input type='text' id='email' /> <br />
-                    <label htmlFor='password'>Password</label>
-                    <input type='password' id='password' /> <br />
-                    <label htmlFor='confirm'>Confirm Password</label>
-                    <input type='password' id='confirm' /> <br />
-                    <input type="button" value='Sign Up' id='submit' style={{marginTop: '5vh'}} onClick={submitForm} />
+                    <input type='text' id='username' className={styles.textInput} placeholder='Username' /> <br />
+                    
+                    <input type='password' id='password' className={styles.textInput} placeholder='Password' /> <br />
+                    
+                    <input type='password' id='confirm' className={styles.textInput} placeholder='Confirm Password' /> <br />
+
+                    <input type="button" value='Sign Up' className={styles.submit} id='submit' style={{marginTop: '5vh'}} onClick={submitForm} />
                 </form>
             </main>
             <main className={styles.image}>

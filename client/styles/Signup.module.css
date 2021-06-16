@@ -22,17 +22,31 @@
     .form h1{
         font-size: 3vw;
     }
-    .form label{
-        font-size: 2vw;
-        font-weight: 700;
+    
+    .textInput{
         display: block;
-        margin-top: 2vh;
-    }
-    .form input{
+        margin-top: 1vh;
         width: 30vw;
         font-size: 1.5vw;
+        border: 1px solid black;
+        border-radius: 5px;
+        padding: 5px;
     }
 
+    .submit{
+        border: none;
+        outline: none;
+        font-weight: 600;
+        padding: 3vw;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        background-color: #F67E7D;
+        width: 20vw;
+        justify-self: center;
+        margin-left: 5vw;
+        border-radius: 5px;
+        font-size: 1.5vw;
+    }
     .image{
         grid-area: image;
         width: 100%;
@@ -42,8 +56,44 @@
 }
 
 @media only screen and (max-width: 1200px) {
-    .container{
+    .form{
+        height: 100%;
+        grid-area: form;
         display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        align-items: center;
+        justify-content: center;
+        margin-left: 5vw;
+    }
+
+    .form h1{
+        font-size: 3vw;
+    }
+    
+    .textInput{
+        display: block;
+        margin-top: 1vh;
+        width: 30vw;
+        font-size: 1.5vw;
+        border: 1px solid black;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    .submit{
+        border: none;
+        outline: none;
+        font-weight: 600;
+        padding: 3vw;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        background-color: #F67E7D;
+        width: 20vw;
+        justify-self: center;
+        margin-left: 5vw;
+        border-radius: 5px;
+        font-size: 1.5vw;
     }
     .image{
         display: none;
