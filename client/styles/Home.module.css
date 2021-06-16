@@ -51,6 +51,8 @@
     font-weight: 700;
   }
   .getStartedLink{
+    align-self: center;
+    margin-right: 10vw;
     margin-top: 10vh;
     font-size: 4vw;
     font-weight: 700;
