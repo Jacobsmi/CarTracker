@@ -1,26 +1,26 @@
 import Image from 'next/image'
 import styles from '../styles/Signup.module.css'
 
-export default function Signup(){
-    function submitForm(){
+export default function Signup() {
+    function submitForm() {
         console.log("Submitted")
     }
-    return(
+    return (
         <div className={styles.container}>
-            <main className={styles.form}>
-                <h1>Sign Up</h1>
-                <form>
-                    <input type='text' id='username' className={styles.textInput} placeholder='Username' /> <br />
-                    
-                    <input type='password' id='password' className={styles.textInput} placeholder='Password' /> <br />
-                    
-                    <input type='password' id='confirm' className={styles.textInput} placeholder='Confirm Password' /> <br />
+            <header className={styles.header}>
+                Sign Up
+            </header>
+            <main className={styles.main}>
+                <input type='text' id='name' className={styles.textInput} placeholder='Full Name' />
 
-                    <input type="button" value='Sign Up' className={styles.submit} id='submit' style={{marginTop: '5vh'}} onClick={submitForm} />
-                </form>
-            </main>
-            <main className={styles.image}>
-                <Image src='/signup.svg' layout='fill' />
+                <input type='text' id='username' className={styles.textInput} placeholder='Username' />
+
+                <input type='password' id='password' className={styles.textInput} placeholder='Password' />
+
+                <input type='password' id='confirm' className={styles.textInput} placeholder='Confirm Password' />
+
+                <input type="button" value='Sign Up' className={styles.submit} id='submit' onClick={submitForm} />
+
             </main>
         </div>
     )
