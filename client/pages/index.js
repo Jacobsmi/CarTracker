@@ -11,29 +11,30 @@ export default function Home() {
         <meta name="description" content="Landing page for Car Tracker" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <header className={styles.logo}>
-        Car Tracker
-      </header>
-      <header className={styles.links}>
-        <Link href='/signup'>
-          <a>Login</a>
-        </Link>
-        <Link href='/signup'>
-          <a id={styles.signupLink}>Sign Up</a>
-        </Link>
+      <header className={styles.header}>
+        <div className={styles.logo}>
+          Car Tracker
+        </div>
+        <div className={styles.links}>
+          <Link href='/login'>
+            <a>Login</a>
+          </Link>
+          <Link href='/signup'>
+            <a id={styles.signupLink}>Sign Up</a>
+          </Link>
+        </div>
       </header>
 
       <main className={styles.body}>
-        <div className={styles.bodyText}>
-          <h1>Track all the cool and exciting cars you have ever owned and want to own in the future</h1>
-          <h2>Sign up and never forget a cool car ever again</h2>
-          <Link href='/signup'>
-            <a className={styles.getStartedLink}>Get Started</a>
-          </Link>
+        <div className={styles.head1}>
+          Never lose the cars of your dreams
         </div>
-        <div className={styles.bodyImage}>
-          <Image src='/car.svg' layout='fill' />
+        <div className={styles.head2}>
+          Track cars you want and cars you have owned so you never forget
         </div>
+        <Link href='/signup'>
+          <a className={styles.getstartedButton}>Get Started</a>
+        </Link>
       </main>
     </div>
   )

@@ -2,126 +2,89 @@
   height: 100vh;
   min-height: 600px;
   width: 100vw;
+  background-color: #2B2D42;
   display: grid;
-  grid-template-columns: 0.35fr 0.3fr 0.35fr;
-  grid-template-rows: 0.1fr 0.9fr;
-  grid-template-areas: 'logo none links'
-                       'body body body';
+  grid-template-rows: 0.15fr 0.85fr;
+  grid-template-areas: 'header' 'main';
+  color: white;
+}
+.header{
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  width: 100%;
+}
+.logo{
+  margin-left: 5vw;
+  flex-grow: 1;
+}
+.links{
+  margin-right: 5vw;
+}
+#signupLink{
+  margin-left: 5vw;
+  padding: 10px;
+  background-color: #8D99AE;
+  border-radius: 10px;
+}
+.body{
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+.head1{
+  margin-top: 20vh;
+}
+.head2{
+  margin-top: 10vh;
+}
+.getstartedButton{
+  margin-top: 10vh;
+  padding: 10px;
+  background-color: #8D99AE;
+  border-radius: 10px;
 }
 
-@media only screen and (max-width:1200px) {
-  .logo{ 
-    grid-area: logo;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 4vw;
-    font-weight: 700;
+@media screen and (max-width: 480px) {
+  .logo{
+    font-size: 6vw;
   }
   .links{
-    grid-area: links;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3vw;
-    font-weight: 700;
+    font-size: 5vw;
   }
-  #signupLink{
-    margin-left: 5vw;
-    background-color: #F67E7D;
-    padding: 10px;
+  .head1{
+    font-size: 6vw;
+    font-weight: 600;
   }
-  .body{
-    grid-area: body;
+  .head2{
+    font-size: 6vw;
   }
-  .bodyText{
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin-left: 10vw;
-  }
-  .bodyText h1{
-    width: 80vw;
-    font-weight: 700;
-  }
-  .bodyText h2{
-    margin-top: 5vh;
-    width: 80vw;
-    font-weight: 700;
-  }
-  .getStartedLink{
+  .getstartedButton{
     align-self: center;
-    margin-right: 10vw;
-    margin-top: 10vh;
-    font-size: 4vw;
-    font-weight: 700;
-    padding: 10px;
-    border-radius: 10px;
-    background-color: #F67E7D;
-    width: fit-content;
+    width: 30vw;
   }
-  .bodyImage{
-    display: none;
-  } 
+
 }
 
-@media only screen and (min-width: 1201px) {
-  .logo{ 
-    grid-area: logo;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2vw;
-    font-weight: 700;
+@media screen and (min-width: 481px){
+  .logo{
+    font-size: 3vw;
   }
   .links{
-    grid-area: links;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2vw;
-    font-weight: 700;
-  }
-  #signupLink{
-    margin-left: 2vw;
-    background-color: #F67E7D;
-    padding: 10px;
-  }
-  .body{
-    grid-area: body;
-    display: flex;
-  }
-  .bodyText{
-    width: 50vw;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin-left: 10vw;
-  }
-  .bodyText h1{
-    width: 40vw;
-    font-weight: 600;
-  }
-  .bodyText h2{
-    margin-top: 5vh;
-    width: 40vw;
-    font-weight: 600;
-  }
-  .getStartedLink{
-    margin-top: 10vh;
     font-size: 2vw;
-    font-weight: 600;
-    padding: 10px;
-    border-radius: 10px;
-    background-color: #F67E7D;
-    width: fit-content;
   }
-  .bodyImage{
-    width: 40vw;
-    margin-right: 10vw;
-    height: 100%;
-    position: relative;
+  .head1{
+    font-size: 3vw;
+    font-weight: 600;
+  }
+  .head2{
+    align-self: center;
+    font-size: 3vw;
+    width: 60vw;
+  }
+  .getstartedButton{
+    font-size: 2vw;
+    align-self: center;
+    width: 30vw;
   }
 }
