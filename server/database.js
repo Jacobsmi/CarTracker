@@ -1,4 +1,4 @@
-const { Sequelize, Model, DataTypes } = require('sequelize');
+const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config()
 
 const sequelize = new Sequelize(`postgres://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
@@ -10,6 +10,7 @@ const User = sequelize.define("user", {
     },
     username: {
         type: DataTypes.TEXT,
+        unique: true,
         allowNull: false
     },
     password: {

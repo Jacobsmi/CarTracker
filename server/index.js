@@ -1,9 +1,11 @@
 const express = require('express');
 const { sequelize, User }= require('./database')
+const bodyParser = require('body-parser')
 
 
 
 const app = express()
+app.use(express.json())
 const port = 5000
 
 sequelize
@@ -20,8 +22,15 @@ app.get('/', (req, res) => {
 })
 
 app.post('/createuser', async (req, res)=>{
-  const newUser = User.build({ name: "Jane Doe", username: "janedoe", password: 'Pass1234!' });
-  await newUser.save();
+  const newUser = User.build({ name: req.body.name, username: req.body.username, password: req.body.password });
+  try{
+    await newUser.save()
+  }catch (err) {
+    if (err.name === "SequelizeUniqueConstraintError"){
+      res.send(JSON.stringify({"error": "account_already_exists"}))
+    }
+  }
+
   res.send(JSON.stringify({"success":true}))
 })
 
