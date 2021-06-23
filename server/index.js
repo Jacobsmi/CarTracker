@@ -1,10 +1,9 @@
 const express = require('express');
-const { Sequelize, Model, DataTypes } = require('sequelize');
-require('dotenv').config()
+const { sequelize, User }= require('./database')
+
 
 
 const app = express()
-const sequelize = new Sequelize(`postgres://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
 const port = 5000
 
 sequelize
@@ -18,6 +17,12 @@ sequelize
 
 app.get('/', (req, res) => {
   res.send('Hello World')
+})
+
+app.post('/createuser', async (req, res)=>{
+  const newUser = User.build({ name: "Jane Doe", username: "janedoe", password: 'Pass1234!' });
+  await newUser.save();
+  res.send(JSON.stringify({"success":true}))
 })
 
 app.listen(port, () => {
