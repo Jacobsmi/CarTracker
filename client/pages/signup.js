@@ -52,7 +52,17 @@ export default function Signup() {
     // If all fields are valid do an API call
     if(validName && validUsername && validPassword && passMatch){
       setError(false)
-      const result = await fetch('/api/signup')
+      const result = await fetch('http://localhost:5000/signup',{
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          "name": name,
+          "username": username,
+          "password": password
+        })
+      })
       const resultJSON = await result.json()
       console.log(resultJSON)
     }
