@@ -17,6 +17,25 @@ type response struct {
 	Err     string
 }
 
+func errorHandler(w http.ResponseWriter, err error) {
+	var resp response
+	// If it is a pq type error handle here
+	if err, ok := err.(*pq.Error); ok {
+		switch string(err.Code) {
+		case "23505":
+			resp = response{false, "duplicate_user"}
+		default:
+			resp = response{false, "unhandled_db_error"}
+		}
+	} else {
+		// Unknown error
+		resp = response{false, "unhandled_err"}
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusInternalServerError)
+	json.NewEncoder(w).Encode(resp)
+}
+
 func signUp(w http.ResponseWriter, r *http.Request) {
 	// Decode the JSON from the request into a user object
 	var newUser models.User
@@ -46,22 +65,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 
 	// Insert error handling
 	if err != nil {
-		var resp response
-		// If it is a pq type error handle here
-		if err, ok := err.(*pq.Error); ok {
-			switch string(err.Code) {
-			case "23505":
-				resp = response{false, "duplicate_user"}
-			default:
-				resp = response{false, "unhandled_db_error"}
-			}
-		} else {
-			// Unknown error
-			resp = response{false, "unhandled_err"}
-		}
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(resp)
+		errorHandler(w, err)
 		return
 	}
 	// If no errors return
