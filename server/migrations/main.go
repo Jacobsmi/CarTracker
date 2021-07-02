@@ -9,7 +9,7 @@ import (
 func main() {
 	defer dbutils.DB.Close()
 
-	sqlStatement := `CREATE TABLE users(
+	sqlStatement := `CREATE TABLE IF NOT EXISTS users(
 		id SERIAL,
 		name VARCHAR NOT NULL,
 		username VARCHAR UNIQUE NOT NULL,
@@ -21,4 +21,6 @@ func main() {
 		fmt.Println("Error creating table")
 		panic(err)
 	}
+
+	fmt.Println("Migrations completed successfully")
 }
