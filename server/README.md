@@ -1,22 +1,27 @@
-# Car Tracker Server
+# Car Tracker API
 
-## Prerequisites
+- Provides backend functionality for the CarTracker frontend
+- Must be run locally for the project to work
 
-- Node version 15.14.0+
-- PostgreSQL 13.3+
-
-## Running the Sever
+## Running the Server
 
 - Step 1
-  - Create a Postgres database to be used with the project
-
+  - Create a PostgreSQL database called `cartracker`
 - Step 2
-  - Create a `.env` file in the server directory with the following variables
-    - DB_USER - A user that has CRUD access to the database just created
-    - DB_PASS - The password for that user
-    - DB_HOST - The host for the database created
-    - DB_PORT - The port for the database created
-    - DB_NAME - The name of the database created
+  - Create a file called `dbvars.go` in `server/src/dbutils/` with the following content
+  ```go
+  package dbutils
 
+  const (
+	host     = "localhost"
+	port     = 5432
+	user     = "your=db-user"
+	password = "your-pass"
+	dbname   = "cartracker"
+  )
+  ```
+  and customize the variable values for your database
 - Step 3
-  - 
+  - Change into the `migrations` directory and run the `main.go` in the migrations directory to set up the tables necessary for the server to run
+- Step 4
+  - Change into the `src` directory and run the `main.go` and the server will be ready for use
