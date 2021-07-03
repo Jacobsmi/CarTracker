@@ -17,6 +17,20 @@ type response struct {
 	Err     string
 }
 
+// Cors for options requests
+func corsOptionsResp(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func corsJsonResp(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+}
+
+// Handle errors for database functions
 func errorHandler(w http.ResponseWriter, err error) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	var resp response
@@ -32,19 +46,12 @@ func errorHandler(w http.ResponseWriter, err error) {
 		// Unknown error
 		resp = response{false, "unhandled_err"}
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	corsJsonResp(w)
 	w.WriteHeader(http.StatusInternalServerError)
 	json.NewEncoder(w).Encode(resp)
 }
 
-func corsOptionsResp(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-	w.WriteHeader(http.StatusAccepted)
-}
-
+// Sign up Route handler
 func signUp(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 	if r.Method == "OPTIONS" {
@@ -55,8 +62,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 
 		err := json.NewDecoder(r.Body).Decode(&newUser)
 		if err != nil {
-			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			corsJsonResp(w)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(response{false, "json_decode_err"})
 			return
@@ -65,8 +71,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		// Hash the password using Golang bcrypt package
 		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
 		if hashErr != nil {
-			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			corsJsonResp(w)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(response{false, "hashing_error"})
 			return
@@ -84,7 +89,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// If no errors return
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		corsJsonResp(w)
 		json.NewEncoder(w).Encode(response{true, ""})
 	}
 }
