@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/Jacobsmi/CarTracker/server/src/dbutils"
 	"github.com/Jacobsmi/CarTracker/server/src/dbutils/models"
@@ -34,20 +35,24 @@ func corsJsonResp(w http.ResponseWriter) {
 func errorHandler(w http.ResponseWriter, err error) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	var resp response
+
+	corsJsonResp(w)
+
 	// If it is a pq type error handle here
 	if err, ok := err.(*pq.Error); ok {
 		switch string(err.Code) {
 		case "23505":
 			resp = response{false, "duplicate_user"}
+			w.WriteHeader(http.StatusConflict)
 		default:
 			resp = response{false, "unhandled_db_error"}
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 	} else {
 		// Unknown error
 		resp = response{false, "unhandled_err"}
+		w.WriteHeader(http.StatusInternalServerError)
 	}
-	corsJsonResp(w)
-	w.WriteHeader(http.StatusInternalServerError)
 	json.NewEncoder(w).Encode(resp)
 }
 
@@ -81,7 +86,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		sqlStatement := `INSERT INTO users(name, username, password) VALUES($1, $2, $3);`
 
 		// Attempt to execute the SQL Statement
-		_, err = dbutils.DB.Exec(sqlStatement, newUser.Name, newUser.Username, string(hashedPassword))
+		_, err = dbutils.DB.Exec(sqlStatement, strings.ToLower(newUser.Name), newUser.Username, string(hashedPassword))
 
 		// Insert error handling
 		if err != nil {
