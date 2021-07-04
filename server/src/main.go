@@ -6,21 +6,31 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Jacobsmi/CarTracker/server/src/dbutils"
 	"github.com/Jacobsmi/CarTracker/server/src/dbutils/models"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var jwtKey = []byte("my_secret_key")
 
 type response struct {
 	Success bool
 	Err     string
 }
 
+type Claims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
+
 // Cors for options requests
 func corsOptionsResp(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	w.WriteHeader(http.StatusAccepted)
@@ -28,7 +38,9 @@ func corsOptionsResp(w http.ResponseWriter) {
 
 func corsJsonResp(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusAccepted)
 }
 
 // Handle errors for database functions
@@ -93,6 +105,27 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 			errorHandler(w, err)
 			return
 		}
+		expirationTime := time.Now().Add(5 * time.Minute)
+		claims := Claims{
+			Username: newUser.Username,
+			StandardClaims: jwt.StandardClaims{
+				// In JWT, the expiry time is expressed as unix milliseconds
+				ExpiresAt: expirationTime.Unix(),
+			},
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		tokenString, err := token.SignedString(jwtKey)
+
+		if err != nil {
+			fmt.Println("Error generating token")
+			fmt.Println(err)
+			return
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:    "token",
+			Value:   tokenString,
+			Expires: expirationTime,
+		})
 		// If no errors return
 		corsJsonResp(w)
 		json.NewEncoder(w).Encode(response{true, ""})
