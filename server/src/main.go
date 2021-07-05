@@ -105,7 +105,9 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 			errorHandler(w, err)
 			return
 		}
-		expirationTime := time.Now().Add(5 * time.Minute)
+		// Control how long the token should be valid for
+		expirationTime := time.Now().Add(20 * time.Minute)
+
 		claims := Claims{
 			Username: newUser.Username,
 			StandardClaims: jwt.StandardClaims{
@@ -122,9 +124,11 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.SetCookie(w, &http.Cookie{
-			Name:    "token",
-			Value:   tokenString,
-			Expires: expirationTime,
+			Name:     "token",
+			Value:    tokenString,
+			Expires:  expirationTime,
+			HttpOnly: true,
+			Secure:   true,
 		})
 		// If no errors return
 		corsJsonResp(w)
