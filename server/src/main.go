@@ -123,6 +123,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			return
 		}
+		// Set the cookie
 		http.SetCookie(w, &http.Cookie{
 			Name:     "token",
 			Value:    tokenString,
@@ -130,13 +131,28 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 			HttpOnly: true,
 			Secure:   true,
 		})
-		// If no errors return
+		// Set the headers for the response
+		corsJsonResp(w)
+		// Set the body of the response
+		json.NewEncoder(w).Encode(response{true, ""})
+	}
+}
+
+func checkToken(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Check Token Route")
+	if r.Method == "OPTIONS" {
+		corsOptionsResp(w)
+	} else if r.Method == "POST" {
+		// Need to check the token here
+
+		// Set headers for the response
 		corsJsonResp(w)
 		json.NewEncoder(w).Encode(response{true, ""})
 	}
 }
 
 func handleFuncs() {
+	http.HandleFunc("/checktoken", checkToken)
 	http.HandleFunc("/signup", signUp)
 
 	fmt.Println("Running the API at http://localhost:5000")
