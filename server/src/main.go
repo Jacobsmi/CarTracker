@@ -22,6 +22,11 @@ type response struct {
 	Err     string
 }
 
+type userResponse struct {
+	Success bool
+	User    models.User
+}
+
 type Claims struct {
 	Username string `json:"username"`
 	jwt.StandardClaims
@@ -115,7 +120,9 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 				ExpiresAt: expirationTime.Unix(),
 			},
 		}
+		// Generates the token
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		// Returns the complete signed token
 		tokenString, err := token.SignedString(jwtKey)
 
 		if err != nil {
@@ -150,14 +157,39 @@ func getUserInfo(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(response{false, "cookie_parse_error"})
 			return
 		}
-		token := tokenCookie.Value
+		tokenValue := tokenCookie.Value
 
-		fmt.Println(token)
+		// Create a variable of type claims to hold the claims
+		tokenClaims := Claims{}
+		// Parse out the token and the claims
+		// Token just holds basic info like validity claims have actual token information
+		token, err := jwt.ParseWithClaims(tokenValue, &tokenClaims, func(t *jwt.Token) (interface{}, error) {
+			return []byte(jwtKey), nil
+		})
+		if err != nil {
+			fmt.Println("error parsing token")
+			fmt.Println(err)
+			return
+		}
+		// Create a temporary instance of the struct for the SQL data to be written into
+		var user models.User
 		// Parse out cookie info here to get username
-
+		if token.Valid {
+			// Create a SQL statement to get the user info from the database
+			sqlStatement := `SELECT * FROM users WHERE username = $1`
+			// Queries the database for a single row with user data
+			row := dbutils.DB.QueryRow(sqlStatement, tokenClaims.Username)
+			// Scan the row that was returned to extract inforamtion
+			err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Password)
+			if err != nil {
+				fmt.Println("Error reading SQL Data")
+				fmt.Println(err)
+				return
+			}
+		}
 		// Set headers for the response
 		corsJsonResp(w)
-		json.NewEncoder(w).Encode(response{true, ""})
+		json.NewEncoder(w).Encode(userResponse{true, user})
 	}
 }
 
