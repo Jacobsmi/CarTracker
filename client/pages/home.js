@@ -4,7 +4,7 @@ import Router from 'next/router'
 export default function Home(){
   useEffect(()=>{
     async function checkToken() {
-      const resp = await fetch("http://localhost:5000/checktoken",{
+      const resp = await fetch("http://localhost:5000/getuserinfo",{
         method: "POST",
         credentials: "include",
         headers: {
@@ -12,8 +12,11 @@ export default function Home(){
         }
       })
       const respJSON = await resp.json()
+      
       if (respJSON.Success != true) {
         Router.push('/')
+      }else if( respJSON.Success == true) {
+        console.log(respJSON)
       }
     }
     checkToken()

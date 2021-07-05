@@ -138,12 +138,22 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func checkToken(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Check Token Route")
+func getUserInfo(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		corsOptionsResp(w)
 	} else if r.Method == "POST" {
 		// Need to check the token here
+		tokenCookie, err := r.Cookie("token")
+		if err != nil {
+			fmt.Println(err)
+			corsJsonResp(w)
+			json.NewEncoder(w).Encode(response{false, "cookie_parse_error"})
+			return
+		}
+		token := tokenCookie.Value
+
+		fmt.Println(token)
+		// Parse out cookie info here to get username
 
 		// Set headers for the response
 		corsJsonResp(w)
@@ -152,7 +162,7 @@ func checkToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFuncs() {
-	http.HandleFunc("/checktoken", checkToken)
+	http.HandleFunc("/getuserinfo", getUserInfo)
 	http.HandleFunc("/signup", signUp)
 
 	fmt.Println("Running the API at http://localhost:5000")
