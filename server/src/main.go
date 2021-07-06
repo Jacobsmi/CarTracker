@@ -23,8 +23,10 @@ type response struct {
 }
 
 type userResponse struct {
-	Success bool
-	User    models.User
+	Success  bool
+	ID       int
+	Name     string
+	Username string
 }
 
 type Claims struct {
@@ -45,37 +47,10 @@ func corsJsonResp(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusAccepted)
-}
-
-// Handle errors for database functions
-func errorHandler(w http.ResponseWriter, err error) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	var resp response
-
-	corsJsonResp(w)
-
-	// If it is a pq type error handle here
-	if err, ok := err.(*pq.Error); ok {
-		switch string(err.Code) {
-		case "23505":
-			resp = response{false, "duplicate_user"}
-			w.WriteHeader(http.StatusConflict)
-		default:
-			resp = response{false, "unhandled_db_error"}
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	} else {
-		// Unknown error
-		resp = response{false, "unhandled_err"}
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	json.NewEncoder(w).Encode(resp)
 }
 
 // Sign up Route handler
 func signUp(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Method)
 	if r.Method == "OPTIONS" {
 		corsOptionsResp(w)
 	} else if r.Method == "POST" {
@@ -91,8 +66,8 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Hash the password using Golang bcrypt package
-		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
-		if hashErr != nil {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
+		if err != nil {
 			corsJsonResp(w)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(response{false, "hashing_error"})
@@ -105,9 +80,23 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		// Attempt to execute the SQL Statement
 		_, err = dbutils.DB.Exec(sqlStatement, strings.ToLower(newUser.Name), newUser.Username, string(hashedPassword))
 
-		// Insert error handling
-		if err != nil {
-			errorHandler(w, err)
+		// Error handling for DB Insert Statement
+		// Mostly done to caught a duplicate error
+		if err, ok := err.(*pq.Error); ok {
+			corsJsonResp(w)
+			switch string(err.Code) {
+			case "23505":
+				w.WriteHeader(http.StatusConflict)
+				json.NewEncoder(w).Encode(response{false, "duplicate_user"})
+			default:
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(response{false, "unhandled_db_error"})
+			}
+			return
+		} else if err != nil {
+			// Unknown error
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response{false, "unhandled_error"})
 			return
 		}
 		// Control how long the token should be valid for
@@ -126,8 +115,9 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		tokenString, err := token.SignedString(jwtKey)
 
 		if err != nil {
-			fmt.Println("Error generating token")
-			fmt.Println(err)
+			corsJsonResp(w)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response{false, "token_err"})
 			return
 		}
 		// Set the cookie
@@ -140,6 +130,7 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 		})
 		// Set the headers for the response
 		corsJsonResp(w)
+		w.WriteHeader(http.StatusAccepted)
 		// Set the body of the response
 		json.NewEncoder(w).Encode(response{true, ""})
 	}
@@ -189,7 +180,7 @@ func getUserInfo(w http.ResponseWriter, r *http.Request) {
 		}
 		// Set headers for the response
 		corsJsonResp(w)
-		json.NewEncoder(w).Encode(userResponse{true, user})
+		json.NewEncoder(w).Encode(userResponse{true, user.ID, user.Name, user.Username})
 	}
 }
 
