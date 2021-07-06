@@ -11,7 +11,9 @@ import (
 	"github.com/Jacobsmi/CarTracker/server/src/dbutils"
 	"github.com/Jacobsmi/CarTracker/server/src/dbutils/models"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 	"github.com/lib/pq"
+	"github.com/rs/cors"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,21 +36,6 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-// Cors for options requests
-func corsOptionsResp(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-	w.WriteHeader(http.StatusAccepted)
-}
-
-func corsJsonResp(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-}
-
 func generateToken(ID int, w http.ResponseWriter) {
 	// Control how long the token should be valid for
 	expirationTime := time.Now().Add(20 * time.Minute)
@@ -65,7 +52,6 @@ func generateToken(ID int, w http.ResponseWriter) {
 	// Returns the complete signed token
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		corsJsonResp(w)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(response{false, "token_err"})
 		return
@@ -82,124 +68,113 @@ func generateToken(ID int, w http.ResponseWriter) {
 
 // Get User Info
 func getUserInfo(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "OPTIONS" {
-		corsOptionsResp(w)
-	} else if r.Method == "POST" {
-		// Need to check the token here
-		tokenCookie, err := r.Cookie("token")
-		if err != nil {
-			fmt.Println(err)
-			corsJsonResp(w)
-			json.NewEncoder(w).Encode(response{false, "cookie_parse_error"})
-			return
-		}
-		tokenValue := tokenCookie.Value
+	// Need to check the token here
+	tokenCookie, err := r.Cookie("token")
+	if err != nil {
+		fmt.Println(err)
 
-		// Create a variable of type claims to hold the claims
-		tokenClaims := Claims{}
-		// Parse out the token and the claims
-		// Token just holds basic info like validity claims have actual token information
-		token, err := jwt.ParseWithClaims(tokenValue, &tokenClaims, func(t *jwt.Token) (interface{}, error) {
-			return []byte(jwtKey), nil
-		})
-		if err != nil {
-			fmt.Println("error parsing token")
-			fmt.Println(err)
-			return
-		}
-		// Create a temporary instance of the struct for the SQL data to be written into
-		var user models.User
-		// Parse out cookie info here to get username
-		if token.Valid {
-			// Create a SQL statement to get the user info from the database
-			sqlStatement := `SELECT * FROM users WHERE id = $1`
-			// Queries the database for a single row with user data
-			row := dbutils.DB.QueryRow(sqlStatement, tokenClaims.ID)
-			// Scan the row that was returned to extract inforamtion
-			err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Password)
-			if err != nil {
-				fmt.Println("Error reading SQL Data")
-				fmt.Println(err)
-				return
-			}
-		}
-		// Set headers for the response
-		corsJsonResp(w)
-		json.NewEncoder(w).Encode(userResponse{true, user.ID, user.Name, user.Username})
+		json.NewEncoder(w).Encode(response{false, "cookie_parse_error"})
+		return
 	}
-}
+	tokenValue := tokenCookie.Value
 
-// Sign up Route handler attempts to decode JSON into a user object, hash the password provided in the JSON,
-// and then try to insert the new user with hashed password into the database, then issues a token with the new user's ID
-func signUp(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "OPTIONS" {
-		corsOptionsResp(w)
-	} else if r.Method == "POST" {
-		// Decode the JSON from the request into a user object
-		var newUser models.User
-
-		err := json.NewDecoder(r.Body).Decode(&newUser)
-		if err != nil {
-			corsJsonResp(w)
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response{false, "json_decode_err"})
-			return
-		}
-
-		// Hash the password using Golang bcrypt package
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
-		if err != nil {
-			corsJsonResp(w)
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response{false, "hashing_error"})
-			return
-		}
-
-		// Create a parameterized SQL Statement to insert a new user into the database
-		sqlStatement := `INSERT INTO users(name, username, password) VALUES($1, $2, $3) RETURNING ID;`
-
-		// Attempt to execute the SQL Statement
-		_, err = dbutils.DB.Exec(sqlStatement, strings.ToLower(newUser.Name), newUser.Username, string(hashedPassword))
-		// Error handling for DB Insert Statement
-		// Mostly done to caught a duplicate error
-		if err, ok := err.(*pq.Error); ok {
-			corsJsonResp(w)
-			switch string(err.Code) {
-			case "23505":
-				w.WriteHeader(http.StatusConflict)
-				json.NewEncoder(w).Encode(response{false, "duplicate_user"})
-			default:
-				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(response{false, "unhandled_db_error"})
-			}
-			return
-		} else if err != nil {
-			// Unknown error
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response{false, "unhandled_error"})
-			return
-		}
-
-		// Get the ID of the newly created user so it can be used as a claim in the new JWT
-		var id int
-		sqlStatement = `SELECT id FROM users WHERE username = $1`
+	// Create a variable of type claims to hold the claims
+	tokenClaims := Claims{}
+	// Parse out the token and the claims
+	// Token just holds basic info like validity claims have actual token information
+	token, err := jwt.ParseWithClaims(tokenValue, &tokenClaims, func(t *jwt.Token) (interface{}, error) {
+		return []byte(jwtKey), nil
+	})
+	if err != nil {
+		fmt.Println("error parsing token")
+		fmt.Println(err)
+		return
+	}
+	// Create a temporary instance of the struct for the SQL data to be written into
+	var user models.User
+	// Parse out cookie info here to get username
+	if token.Valid {
+		// Create a SQL statement to get the user info from the database
+		sqlStatement := `SELECT * FROM users WHERE id = $1`
 		// Queries the database for a single row with user data
-		row := dbutils.DB.QueryRow(sqlStatement, newUser.Username)
+		row := dbutils.DB.QueryRow(sqlStatement, tokenClaims.ID)
 		// Scan the row that was returned to extract inforamtion
-		err = row.Scan(&id)
+		err := row.Scan(&user.ID, &user.Name, &user.Username, &user.Password)
 		if err != nil {
 			fmt.Println("Error reading SQL Data")
 			fmt.Println(err)
 			return
 		}
-		// Create a token
-		generateToken(id, w)
-		// Set the headers for the response
-		corsJsonResp(w)
-		w.WriteHeader(http.StatusAccepted)
-		// Set the body of the response
-		json.NewEncoder(w).Encode(response{true, ""})
 	}
+	// Set headers for the response
+	json.NewEncoder(w).Encode(userResponse{true, user.ID, user.Name, user.Username})
+}
+
+// Sign up Route handler attempts to decode JSON into a user object, hash the password provided in the JSON,
+// and then try to insert the new user with hashed password into the database, then issues a token with the new user's ID
+func signUp(w http.ResponseWriter, r *http.Request) {
+
+	// Decode the JSON from the request into a user object
+	var newUser models.User
+
+	err := json.NewDecoder(r.Body).Decode(&newUser)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response{false, "json_decode_err"})
+		return
+	}
+
+	// Hash the password using Golang bcrypt package
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response{false, "hashing_error"})
+		return
+	}
+
+	// Create a parameterized SQL Statement to insert a new user into the database
+	sqlStatement := `INSERT INTO users(name, username, password) VALUES($1, $2, $3) RETURNING ID;`
+
+	// Attempt to execute the SQL Statement
+	_, err = dbutils.DB.Exec(sqlStatement, strings.ToLower(newUser.Name), newUser.Username, string(hashedPassword))
+	// Error handling for DB Insert Statement
+	// Mostly done to caught a duplicate error
+	if err, ok := err.(*pq.Error); ok {
+		switch string(err.Code) {
+		case "23505":
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(response{false, "duplicate_user"})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response{false, "unhandled_db_error"})
+		}
+		return
+	} else if err != nil {
+		// Unknown error
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response{false, "unhandled_error"})
+		return
+	}
+
+	// Get the ID of the newly created user so it can be used as a claim in the new JWT
+	var id int
+	sqlStatement = `SELECT id FROM users WHERE username = $1`
+	// Queries the database for a single row with user data
+	row := dbutils.DB.QueryRow(sqlStatement, newUser.Username)
+	// Scan the row that was returned to extract inforamtion
+	err = row.Scan(&id)
+	if err != nil {
+		fmt.Println("Error reading SQL Data")
+		fmt.Println(err)
+		return
+	}
+	// Create a token
+	generateToken(id, w)
+	// Set the headers for the respons
+	w.WriteHeader(http.StatusAccepted)
+	// Set the body of the response
+	json.NewEncoder(w).Encode(response{true, ""})
+
 }
 
 // Login route gets a username and password from JSON in a POST request
@@ -211,7 +186,6 @@ func login(w http.ResponseWriter, r *http.Request) {
 	// Decode the JSON data into the user object
 	err := json.NewDecoder(r.Body).Decode(&loginUser)
 	if err != nil {
-		corsJsonResp(w)
 		json.NewEncoder(w).Encode(response{false, "json_parse_error"})
 		return
 	}
@@ -222,7 +196,6 @@ func login(w http.ResponseWriter, r *http.Request) {
 	// Get the user with correspoding username from the database
 	row := dbutils.DB.QueryRow(sqlStatement, loginUser.Username)
 	if row == nil {
-		corsJsonResp(w)
 		json.NewEncoder(w).Encode(response{false, "user_not_exist"})
 		return
 	}
@@ -235,14 +208,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 	// If error is returned that means wrong pass otherwise issue the user a JWT
 	samePass := bcrypt.CompareHashAndPassword([]byte(scannedUser.Password), []byte(loginUser.Password))
 	if samePass != nil {
-		corsJsonResp(w)
 		json.NewEncoder(w).Encode(response{false, "wrong_pass"})
 		return
 	} else {
 		// Create a token
 		generateToken(scannedUser.ID, w)
 		// Set the headers for the response
-		corsJsonResp(w)
 		w.WriteHeader(http.StatusAccepted)
 		// Set the body of the response
 		json.NewEncoder(w).Encode(response{true, ""})
@@ -251,12 +222,21 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFuncs() {
-	http.HandleFunc("/getuserinfo", getUserInfo)
-	http.HandleFunc("/signup", signUp)
-	http.HandleFunc("/login", login)
+	r := mux.NewRouter()
+
+	r.HandleFunc("/getuserinfo", getUserInfo)
+	r.HandleFunc("/signup", signUp)
+	r.HandleFunc("/login", login)
 
 	fmt.Println("Running the API at http://localhost:5000")
-	log.Fatal(http.ListenAndServe(":5000", nil))
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowCredentials: true,
+	})
+
+	handler := c.Handler(r)
+	log.Fatal(http.ListenAndServe(":5000", handler))
 }
 
 func main() {

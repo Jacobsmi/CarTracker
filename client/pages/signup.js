@@ -63,12 +63,13 @@ export default function Signup() {
         })
       })
       const resultJSON = await result.json()
+      console.log(resultJSON)
       if (resultJSON.Success != true) {
         setError(true)
-        if (resultJSON.Err = "duplicate_user") {
+        if (resultJSON.Err == "duplicate_user") {
           errorString += '<li>Username already exists</li>'
         } else if (resultJSON.Err == "unhandled_db_error") {
-          errorString += '<li>Unhandled DB Error</li>'
+          errorString += '<li>Unhandled DB Error <br> Please Check Database or Contact Admin</li>'
         } else {
           errorString += '<li>Unhandled Error</li>'
         }
