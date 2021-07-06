@@ -193,9 +193,40 @@ func getUserInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func login(w http.ResponseWriter, r *http.Request) {
+	var loginUser models.User
+
+	err := json.NewDecoder(r.Body).Decode(&loginUser)
+	if err != nil {
+		fmt.Println("Error parsing JSON")
+		fmt.Println(err)
+		corsJsonResp(w)
+		json.NewEncoder(w).Encode(response{false, "json_parse_error"})
+		return
+	}
+
+	sqlStatement := `SELECT * FROM users WHERE username = $1`
+
+	row := dbutils.DB.QueryRow(sqlStatement, loginUser.Username)
+
+	var scannedUser models.User
+
+	row.Scan(&scannedUser.ID, &scannedUser.Name, &scannedUser.Username, &scannedUser.Password)
+
+	samePass := bcrypt.CompareHashAndPassword([]byte(scannedUser.Password), []byte(loginUser.Password))
+	if samePass != nil {
+		corsJsonResp(w)
+		json.NewEncoder(w).Encode(response{false, "wrong_pass"})
+		return
+	} else {
+		// Generate a new token
+	}
+}
+
 func handleFuncs() {
 	http.HandleFunc("/getuserinfo", getUserInfo)
 	http.HandleFunc("/signup", signUp)
+	http.HandleFunc("/login", login)
 
 	fmt.Println("Running the API at http://localhost:5000")
 	log.Fatal(http.ListenAndServe(":5000", nil))
